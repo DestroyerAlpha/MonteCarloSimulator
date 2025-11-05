@@ -51,9 +51,18 @@ namespace montecarlo {
     constexpr int VERSION_PATCH = 0;
     
     /**
+     * @brief Mathematical constants
+     */
+    namespace constants {
+        constexpr double PI = 3.141592653589793238462643383279502884;
+        constexpr double E = 2.718281828459045235360287471352662498;
+    }
+    
+    /**
      * @brief Get library version as string
      */
     inline const char* getVersion() {
         return "1.0.0";
     }
 }
+

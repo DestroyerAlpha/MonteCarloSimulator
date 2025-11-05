@@ -36,14 +36,15 @@ int main() {
     
     // Pi estimation: 4 * (points inside circle / total points)
     double pi_estimate = 4.0 * result.mean;
-    double pi_error = std::abs(pi_estimate - M_PI);
+    constexpr double PI = constants::PI;
+    double pi_error = std::abs(pi_estimate - PI);
     
     std::cout << std::fixed << std::setprecision(6);
     std::cout << "\nResults:\n";
     std::cout << "  Estimated Pi: " << pi_estimate << "\n";
-    std::cout << "  Actual Pi:    " << M_PI << "\n";
+    std::cout << "  Actual Pi:    " << PI << "\n";
     std::cout << "  Error:        " << pi_error << "\n";
-    std::cout << "  Error %:      " << (pi_error / M_PI * 100) << "%\n";
+    std::cout << "  Error %:      " << (pi_error / PI * 100) << "%\n";
     std::cout << "\nStatistics:\n";
     std::cout << "  Mean ratio:   " << result.mean << "\n";
     std::cout << "  Std Dev:      " << result.std_dev << "\n";

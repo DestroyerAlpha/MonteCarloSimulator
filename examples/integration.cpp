@@ -68,7 +68,8 @@ int main() {
     // Example 2: Integrate sin(x) from 0 to π
     // Analytical result: 2
     {
-        double a = 0.0, b = M_PI;
+        constexpr double PI = montecarlo::constants::PI;
+        double a = 0.0, b = PI;
         double estimate = monteCarloIntegrate(f2, a, b, num_samples);
         double actual = 2.0;
         

@@ -87,8 +87,9 @@ TEST(testPiEstimation) {
     auto result = sim.run(pi_simulation);
     double pi_estimate = 4.0 * result.mean;
     
+    constexpr double PI = 3.141592653589793238462643383279502884;
     // Should be within 0.05 of actual pi
-    ASSERT_NEAR(pi_estimate, M_PI, 0.05);
+    ASSERT_NEAR(pi_estimate, PI, 0.05);
     
     std::cout << "✓ testPiEstimation passed (estimated: " << pi_estimate << ")\n";
 }

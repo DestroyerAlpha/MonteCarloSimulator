@@ -176,8 +176,9 @@ std::pair<T, T> boxMuller(RandomGenerator& rng) {
     T u1 = rng.uniform<T>(0.0, 1.0);
     T u2 = rng.uniform<T>(0.0, 1.0);
     
+    constexpr T PI = 3.141592653589793238462643383279502884;
     T r = std::sqrt(-2.0 * std::log(u1));
-    T theta = 2.0 * M_PI * u2;
+    T theta = 2.0 * PI * u2;
     
     return {r * std::cos(theta), r * std::sin(theta)};
 }
