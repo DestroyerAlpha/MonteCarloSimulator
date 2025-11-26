@@ -1,10 +1,11 @@
-#include "mc/core.hpp"
-
-#include <iostream>
+#include <gtest/gtest.h>
 #include <cmath>
+#include <iostream>
+#include "montecarlo/montecarlo.hpp"
 
-using namespace mc;
+using namespace montecarlo;
 
+// Simple model that always returns 1
 struct ConstantOneModel {
     template <typename Rng>
     double trial(Rng& rng) const {
@@ -13,30 +14,52 @@ struct ConstantOneModel {
     }
 };
 
-int main() {
-    auto rng_factory = [](std::uint64_t base_seed) {
-        return make_rng(base_seed, 0);
-    };
-
-    auto transform = [](double x) {
-        return x;
-    };
+// Test fixture (optional here, useful if you want shared setup)
+class MonteCarloTest : public ::testing::Test {
+ protected:
+    void SetUp() override {
+        model = ConstantOneModel{};
+        base_seed = 424242ULL;
+        N = 1'000'000;
+    }
 
     ConstantOneModel model;
-    mc::SimulationEngine engine{model, rng_factory, transform, 424242ULL};
+    std::uint64_t base_seed;
+    std::uint64_t N;
+};
 
-    std::uint64_t N = 1'000'000;
-    auto result = engine.run_sequential(N);
+// Test the Monte Carlo mean
+TEST_F(MonteCarloTest, ConstantOneMean) {
+    // Default transform (identity)
+    auto transform = [](double x) { return x; };
 
+    // Construct engine
+    auto engine = make_sequential_engine(model, base_seed,  transform);
+
+    // Run simulation
+    auto result = engine.run(N);
+
+    // Print debug info (optional)
     std::cout << "mean=" << result.estimate
               << " var=" << result.variance
-              << " stderr=" << result.standard_error << "\n";
+              << " stderr=" << result.standard_error << std::endl;
 
-    if (std::abs(result.estimate - 1.0) < 1e-3) {
-        std::cout << "TEST PASS\n";
-        return 0;
-    } else {
-        std::cout << "TEST FAIL\n";
-        return 1;
-    }
+    // Check mean is close to expected
+    EXPECT_NEAR(result.estimate, 1.0, 1e-3);
+}
+
+// Optionally test variance/stderr
+TEST_F(MonteCarloTest, ConstantOneVariance) {
+    // Default transform (identity)
+    auto transform = [](double x) { return x; };
+
+    // Construct engine
+    auto engine = make_sequential_engine(model, base_seed,  transform);
+    
+    // Run simulation
+    auto result = engine.run(N);
+
+    // Variance of constant 1 should be zero
+    EXPECT_NEAR(result.variance, 0.0, 1e-12);
+    EXPECT_NEAR(result.standard_error, 0.0, 1e-12);
 }

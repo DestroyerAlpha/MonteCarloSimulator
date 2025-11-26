@@ -1,3 +1,148 @@
+# MonteCarloSimulator
+
+MonteCarloSimulator is a small C++ library and example collection for Monte Carlo simulations and numerical integration. It provides a lightweight core, RNG utilities, execution backends (sequential, parallel, GPU hooks), and several example programs and tests to get started.
+
+**Repository layout**
+- `include/` — public headers (e.g. `montecarlo.hpp`, `core/*`, `execution/*`).
+- `examples/` — example programs demonstrating usage.
+- `tests/` — unit / small integration tests.
+- `CMakeLists.txt` — top-level CMake build configuration.
+- `LICENSE` — project license.
+
+**Key headers**
+- `include/montecarlo/montecarlo.hpp` — main public entrypoints.
+- `include/montecarlo/core/engine.hpp` — core engine abstractions.
+- `include/montecarlo/core/rng.hpp` — RNG utilities and adapters.
+- `include/montecarlo/core/result.hpp` — result types and helpers.
+- `include/montecarlo/execution/sequential.hpp` — sequential execution backend.
+- `include/montecarlo/execution/parallel.hpp` — parallel (threaded) backend.
+- `include/montecarlo/execution/gpu.hpp` — GPU execution hooks (if available).
+
+Quick Overview
+--------------
+The library is modern C++ and targets C++17 or newer. It is intended to be built with CMake and works with common compilers (g++, clang++).
+
+Build (Quick Start)
+-------------------
+Prerequisites:
+- C++ compiler with C++17 (or newer) support (e.g. `g++`).
+- CMake 3.15+ (or the version required by the top-level `CMakeLists.txt`).
+
+Standard out-of-source build:
+
+```bash
+mkdir -p build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . -- -j
+```
+
+After a successful build, example and test binaries are placed under `build/examples` and `build/tests` respectively (or available as CMake targets). For example, to run the example bundle:
+
+```bash
+./build/examples/all_examples
+```
+
+Run tests with CTest from the `build` directory:
+
+```bash
+cd build
+ctest --output-on-failure
+```
+
+Using the library (simple compile)
+---------------------------------
+If you prefer to build a small program that uses the headers directly without CMake:
+
+```bash
+g++ -std=c++17 -Iinclude examples/main.cpp -o example
+./example
+```
+
+Or reference the library target from your `CMakeLists.txt` (if `MCLib`/`MCLib::MCLib` is exported by the provided config):
+
+```cmake
+find_package(MCLib REQUIRED)
+add_executable(myapp src/main.cpp)
+target_link_libraries(myapp PRIVATE MCLib::MCLib)
+```
+
+API Notes
+---------
+- The public API lives under the `montecarlo` headers inside `include/`.
+- Core concepts include engines, RNG adapters, and result containers. Execution backends are separated under `execution/` so you can swap sequential, parallel, or GPU-backed runs easily.
+
+API Examples (minimal)
+----------------------
+The short examples below are illustrative — they demonstrate the intended usage pattern. Exact class/field names may vary; use them as a starting point for calling into the headers under `include/`.
+
+1) Simple sequential estimate (numerical integration)
+
+```cpp
+#include <montecarlo/montecarlo.hpp> // public header
+#include <iostream>
+
+int main() {
+    // Create a default engine (sequential backend assumed)
+    montecarlo::Engine engine; // illustrative API
+
+    // Create a RNG / sampler object (adapter provided by the library)
+    montecarlo::Rng rng;
+
+    // Run a simulation: 1'000'000 samples to estimate integral of f(x)=x^2 over [0,1]
+    auto result = engine.run(1'000'000, [&](auto &sampler) {
+        double x = sampler(rng); // sampler produces uniform sample in [0,1)
+        return x * x;
+    });
+
+    std::cout << "Estimate: " << result.mean << " ± " << result.std_error << "\n";
+    return 0;
+}
+```
+
+2) Parallel execution (threaded)
+
+```cpp
+#include <montecarlo/montecarlo.hpp>
+#include <montecarlo/execution/parallel.hpp> // enable parallel backend
+#include <iostream>
+
+int main() {
+    // Construct a parallel engine (API shape is illustrative)
+    montecarlo::execution::ParallelEngine engine(/*threads=*/std::thread::hardware_concurrency());
+
+    auto result = engine.run(10'000'000, [](auto &sampler) {
+        double x = sampler();
+        return std::exp(-x * x);
+    });
+
+    std::cout << "Parallel estimate: " << result.mean << "\n";
+}
+```
+
+Notes
+- These examples are intentionally compact. Inspect the real headers in `include/montecarlo` and `include/montecarlo/execution` for the exact type and function names used by this project.
+- If `MCLIB_ENABLE_PARALLEL` is enabled (CMake option), link and include the parallel backend; if `MCLIB_ENABLE_GPU` is enabled, GPU-specific headers and types may be available.
+
+Examples
+--------
+- `examples/` contains small demos: numerical integration, option pricing, and pi estimation.
+- Look at `examples/main.cpp` and the `examples/CMakeLists.txt` to see how examples are wired to the library.
+
+Contributing
+------------
+- Contributions are welcome — please open issues or pull requests.
+- Follow the existing code style and add tests for new functionality.
+
+License
+-------
+This project includes a `LICENSE` file at the repository root. Refer to it for licensing terms.
+
+Contact
+-------
+If you want help getting started or adding features, open an issue or contact the repository owner.
+
+Enjoy experimenting with Monte Carlo methods!
 # Modular Monte Carlo Simulation Framework (Design Using C++)
 
 This repository contains the implementation of a modular Monte Carlo simulation framework in modern C++20 for **COMS W4995 – Design Using C++**.
