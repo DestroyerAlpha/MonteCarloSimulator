@@ -36,30 +36,31 @@ jobs:
       working-directory: build
       run: ctest --output-on-failure
 
-  cuda-build:
-    name: CUDA Build (attempt)
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+  # Uncomment when GPU execution is implemented
+  # cuda-build:
+  #   name: CUDA Build (attempt)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Checkout repository
+  #     uses: actions/checkout@v4
 
-    - name: Install CUDA toolkit (apt package)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential cmake ninja-build libgtest-dev nvidia-cuda-toolkit
-        # Build and install system GoogleTest
-        pushd /usr/src/gtest || exit 0
-        sudo cmake CMakeLists.txt || true
-        sudo make || true
-        sudo cp libg* /usr/lib/ || true
-        popd || true
+  #   - name: Install CUDA toolkit (apt package)
+  #     run: |
+  #       sudo apt-get update
+  #       sudo apt-get install -y build-essential cmake ninja-build libgtest-dev nvidia-cuda-toolkit
+  #       # Build and install system GoogleTest
+  #       pushd /usr/src/gtest || exit 0
+  #       sudo cmake CMakeLists.txt || true
+  #       sudo make || true
+  #       sudo cp libg* /usr/lib/ || true
+  #       popd || true
 
-    - name: Configure (GPU)
-      run: cmake -S . -B build-gpu -DCMAKE_BUILD_TYPE=Release -DMCLIB_BUILD_TESTS=ON -DMCLIB_ENABLE_GPU=ON
+  #   - name: Configure (GPU)
+  #     run: cmake -S . -B build-gpu -DCMAKE_BUILD_TYPE=Release -DMCLIB_BUILD_TESTS=ON -DMCLIB_ENABLE_GPU=ON
 
-    - name: Build (GPU)
-      run: cmake --build build-gpu --parallel || true
+  #   - name: Build (GPU)
+  #     run: cmake --build build-gpu --parallel || true
 
-    - name: Run tests (GPU)
-      working-directory: build-gpu
-      run: ctest --output-on-failure || true
+  #   - name: Run tests (GPU)
+  #     working-directory: build-gpu
+  #     run: ctest --output-on-failure || true
