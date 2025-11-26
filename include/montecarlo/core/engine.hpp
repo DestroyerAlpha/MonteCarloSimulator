@@ -27,7 +27,8 @@ template<
     typename Model,
     typename Aggregator = WelfordAggregator<>,
     typename ExecutionPolicy = execution::Sequential,
-    typename Transform = transform::Identity
+    typename Transform = transform::Identity,
+    typename RngFactory = DefaultRngFactory
 >
 class SimulationEngine {
  public:
@@ -48,10 +49,12 @@ class SimulationEngine {
         Model model,
         ExecutionPolicy policy = ExecutionPolicy{},
         Transform transform = Transform{},
+        RngFactory rng_factory = RngFactory{},
         std::uint64_t base_seed = 123456789ULL) :
         model_(model),
         policy_(policy),
         transform_(transform),
+        rng_factory_(rng_factory),
         base_seed_(base_seed)
     {}
 
@@ -72,7 +75,7 @@ class SimulationEngine {
             return transform_(raw_result);
         };
 
-        policy_.run(wrapped_model, agg, iterations, base_seed_);
+        policy_.run(wrapped_model, agg, iterations, base_seed_, rng_factory_);
 
         auto end = std::chrono::steady_clock::now();
 
@@ -109,6 +112,13 @@ class SimulationEngine {
         base_seed_ = seed;
     }
 
+    /**
+     * @brief Get a copy of the RNG factory used by this engine
+     */
+    RngFactory rng_factory() const noexcept {
+        return rng_factory_;
+    }
+
  private:
     /**
      * @brief Invoke model (handles both .trial() and operator() styles)
@@ -141,6 +151,7 @@ class SimulationEngine {
     Model model_;
     ExecutionPolicy policy_;
     Transform transform_;
+    RngFactory rng_factory_;
     std::uint64_t base_seed_;
 };
 
@@ -151,24 +162,28 @@ template<
     typename Model,
     typename Policy = execution::Sequential,
     typename Aggregator = WelfordAggregator<>,
-    typename Transform = transform::Identity
+    typename Transform = transform::Identity,
+    typename RngFactory = DefaultRngFactory
 >
 auto make_engine(
     Model model,
     Policy policy = Policy{},
     std::uint64_t seed = 123456789ULL,
+    RngFactory rng_factory = RngFactory{},
     Transform transform = Transform{}) {
-    return SimulationEngine<Model, Aggregator, Policy, Transform>(
-        model, policy, transform, seed);
+    return SimulationEngine<Model, Aggregator, Policy, Transform, RngFactory>(
+        model, policy, transform, rng_factory, seed);
 }
 
-template<typename Model, typename Transform = transform::Identity>
-auto make_sequential_engine(Model model, std::uint64_t seed = 123456789ULL, Transform transform = Transform{}) {
-    return make_engine(model, execution::Sequential{}, seed, transform);
+template<typename Model, typename Transform = transform::Identity, typename RngFactory = DefaultRngFactory>
+auto make_sequential_engine(Model model, std::uint64_t seed = 123456789ULL) {
+    return make_engine<Model, execution::Sequential, WelfordAggregator<>, Transform, RngFactory>(
+        model, execution::Sequential{}, seed, RngFactory{}, Transform{});
 }
 
-template<typename Model, typename Transform = transform::Identity>
-auto make_parallel_engine(Model model, size_t threads = 0, std::uint64_t seed = 123456789ULL, Transform transform = Transform{}) {
-    return make_engine(model, execution::Parallel{threads}, seed, transform);
+template<typename Model, typename Transform = transform::Identity, typename RngFactory = DefaultRngFactory>
+auto make_parallel_engine(Model model, size_t threads = 0, std::uint64_t seed = 123456789ULL) {
+    return make_engine<Model, execution::Parallel, WelfordAggregator<>, Transform, RngFactory>(
+        model, execution::Parallel{threads}, seed, RngFactory{}, Transform{});
 }
 }  // namespace montecarlo

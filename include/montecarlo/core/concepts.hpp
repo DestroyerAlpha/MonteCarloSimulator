@@ -1,6 +1,8 @@
 #pragma once
 #include <concepts>
 #include <random>
+#include <type_traits>
+#include <cstdint>
 
 namespace montecarlo {
 
@@ -28,4 +30,10 @@ concept ResultAggregator = requires(Aggregator agg, T value) {
     { agg.result() } -> std::convertible_to<double>;
     { agg.reset() } -> std::same_as<void>;
 };
+
+// RNG factory concept: callable with a seed returning a UniformRandomBitGenerator
+template<typename F>
+concept RngFactory = requires(F f, std::uint64_t s) {
+    { f(s) };
+} && std::uniform_random_bit_generator<std::decay_t<decltype(std::declval<F>()(0u))>>;
 }  // namespace montecarlo

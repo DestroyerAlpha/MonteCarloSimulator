@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include "montecarlo/montecarlo.hpp"
+#include "stub_rng.hpp"
 
 using namespace montecarlo;
 
@@ -34,8 +35,8 @@ TEST_F(MonteCarloTest, ConstantOneMean) {
     auto transform = [](double x) { return x; };
 
     // Construct engine
-    auto engine = make_sequential_engine(model, base_seed,  transform);
-
+    auto engine = make_engine(model, execution::Sequential{}, base_seed,
+        StubFactory{}, transform);
     // Run simulation
     auto result = engine.run(N);
 
@@ -54,8 +55,9 @@ TEST_F(MonteCarloTest, ConstantOneVariance) {
     auto transform = [](double x) { return x; };
 
     // Construct engine
-    auto engine = make_sequential_engine(model, base_seed,  transform);
-    
+    auto engine = make_engine(model, execution::Sequential{}, base_seed,
+        StubFactory{}, transform);
+
     // Run simulation
     auto result = engine.run(N);
 
