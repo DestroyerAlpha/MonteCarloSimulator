@@ -1,0 +1,16 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Find required dependencies
+if(@MCLIB_ENABLE_PARALLEL@)
+    find_dependency(Threads REQUIRED)
+endif()
+
+if(@MCLIB_ENABLE_GPU@)
+    find_dependency(CUDAToolkit REQUIRED)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/MClibTargets.cmake")
+
+check_required_components(MCLib)
