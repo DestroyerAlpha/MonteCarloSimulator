@@ -1,20 +1,23 @@
-# Root CMakeLists.txt
 cmake_minimum_required(VERSION 3.18)
 project(MonteCarloLib VERSION 1.0.0 LANGUAGES CXX)
-
-# Set C++ standard
+#
+# --- Global settings -------------------------------------------------------
+#
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-# Build options
+#
+# --- Options ---------------------------------------------------------------
+#
 option(MCLIB_BUILD_EXAMPLES "Build example applications" ON)
 option(MCLIB_BUILD_TESTS "Build unit tests" ON)
 option(MCLIB_ENABLE_PARALLEL "Enable parallel CPU execution" ON)
 option(MCLIB_ENABLE_GPU "Enable GPU acceleration (CUDA)" OFF)
 
 # Compiler warnings
-add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-
+add_library(montecarlo_warnings INTERFACE)
+target_compile_options(montecarlo_warnings INTERFACE
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wpedantic -Werror>
+)
 # Find dependencies based on options
 if(MCLIB_ENABLE_PARALLEL)
     find_package(Threads REQUIRED)
@@ -25,11 +28,15 @@ if(MCLIB_ENABLE_GPU)
     find_package(CUDAToolkit REQUIRED)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    target_compile_options(montecarlo_warnings INTERFACE
+        $<$<COMPILE_LANGUAGE:CUDA>:>
+    )
 endif()
 
 # Library target (header-only)
 add_library(montecarlo INTERFACE)
 add_library(montecarlo::montecarlo ALIAS montecarlo)
+
 
 target_include_directories(montecarlo INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -49,6 +56,9 @@ if(MCLIB_ENABLE_GPU)
     target_link_libraries(montecarlo INTERFACE CUDA::cudart)
 endif()
 
+target_link_libraries(montecarlo INTERFACE
+    $<BUILD_INTERFACE:montecarlo_warnings>
+)
 # Examples
 if(MCLIB_BUILD_EXAMPLES)
     add_subdirectory(examples)
