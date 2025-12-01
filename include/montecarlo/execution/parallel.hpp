@@ -39,14 +39,18 @@ class Parallel {
             thread.join();
         }
 
-        // Merge results - aggregate all local results into main aggregator
+        // Merge results - aggregate all local results into main aggregator.
+        // Prefer a native merge() if the aggregator exposes one, otherwise
+        // fall back to replaying the per-thread means.
         agg.reset();
         for (const auto& local_agg : local_aggs) {
-            // Get each local result and add it to main aggregator
-            // This works for MeanAggregator as each result is already averaged
-            if (local_agg.count() > 0) {
-                for (size_t i = 0; i < local_agg.count(); ++i) {
-                    agg.add(local_agg.result());
+            if constexpr (requires { agg.merge(local_agg); }) {
+                agg.merge(local_agg);
+            } else {
+                if (local_agg.count() > 0) {
+                    for (size_t i = 0; i < local_agg.count(); ++i) {
+                        agg.add(local_agg.result());
+                    }
                 }
             }
         }

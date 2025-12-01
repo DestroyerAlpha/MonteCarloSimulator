@@ -10,6 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 #
 option(MCLIB_BUILD_EXAMPLES "Build example applications" ON)
 option(MCLIB_BUILD_TESTS "Build unit tests" ON)
+option(MCLIB_BUILD_BENCHMARKS "Build benchmark harness" ON)
 option(MCLIB_ENABLE_PARALLEL "Enable parallel CPU execution" ON)
 option(MCLIB_ENABLE_GPU "Enable GPU acceleration (CUDA)" OFF)
 
@@ -68,6 +69,11 @@ endif()
 if(MCLIB_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+# Benchmarks
+if(MCLIB_BUILD_BENCHMARKS)
+    add_subdirectory(bench)
 endif()
 
 # Installation

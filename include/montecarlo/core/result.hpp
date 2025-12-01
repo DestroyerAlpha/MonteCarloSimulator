@@ -65,6 +65,23 @@ class WelfordAggregator {
         return count_ > 0 ? std::sqrt(variance() / static_cast<double>(count_)) : 0.0;
     }
 
+    // Merge another aggregator using Chan's parallel variance algorithm
+    void merge(const WelfordAggregator& other) {
+        if (other.count_ == 0) return;
+        if (count_ == 0) {
+            mean_ = other.mean_;
+            m2_ = other.m2_;
+            count_ = other.count_;
+            return;
+        }
+        double total = static_cast<double>(count_ + other.count_);
+        double delta = other.mean_ - mean_;
+        mean_ += delta * (static_cast<double>(other.count_) / total);
+        m2_ += other.m2_ + delta * delta *
+            (static_cast<double>(count_) * static_cast<double>(other.count_) / total);
+        count_ += other.count_;
+    }
+
     void reset() {
         mean_ = 0.0;
         m2_ = 0.0;
