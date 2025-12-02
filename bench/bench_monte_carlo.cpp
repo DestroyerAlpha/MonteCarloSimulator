@@ -10,7 +10,9 @@
 #include <vector>
 
 using montecarlo::make_engine;
+#ifdef MCLIB_PARALLEL_ENABLED
 using montecarlo::make_parallel_engine;
+#endif
 using montecarlo::make_sequential_engine;
 using montecarlo::transform::Identity;
 using montecarlo::WelfordAggregator;
@@ -101,6 +103,7 @@ BenchRow run_engine(std::size_t threads, int run_idx, const Options& opts) {
     }
 #else
     (void)threads;
+    threads = 1;
 #endif
     auto engine = make_sequential_engine(model, opts.seed);
     auto r = engine.run(samples);

@@ -181,9 +181,11 @@ auto make_sequential_engine(Model model, std::uint64_t seed = 123456789ULL) {
         model, execution::Sequential{}, seed, RngFactory{}, Transform{});
 }
 
+#ifdef MCLIB_PARALLEL_ENABLED
 template<typename Model, typename Transform = transform::Identity, typename RngFactory = DefaultRngFactory>
 auto make_parallel_engine(Model model, size_t threads = 0, std::uint64_t seed = 123456789ULL) {
     return make_engine<Model, execution::Parallel, WelfordAggregator<>, Transform, RngFactory>(
         model, execution::Parallel{threads}, seed, RngFactory{}, Transform{});
 }
+#endif
 }  // namespace montecarlo
