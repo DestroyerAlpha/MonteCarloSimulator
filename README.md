@@ -160,7 +160,7 @@ cmake -DMCLIB_ENABLE_PARALLEL=ON -DMCLIB_BUILD_EXAMPLES=ON ..
 The library uses concepts for compile-time type safety:
 
 | Concept | Requirements | Purpose |
-|---------|--------------|---------||
+|---------|--------------|---------|
 | `SimulationModel<M, RNG>` | `M::trial(RNG&)` or `M::operator()(RNG&)` | Defines trial logic |
 | `ResultAggregator<A>` | `add()`, `result()`, `reset()` | Collects trial results |
 | `Transform<T>` | `operator()(double) -> double` | Post-processes values |
