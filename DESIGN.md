@@ -617,9 +617,7 @@ for (size_t t = 0; t < num_threads_; ++t) {
 - Aggregator merge is sequential
 
 **Performance Model**:
-$$
-T_{parallel} = \frac{T_{sequential}}{N_{threads}} + T_{merge} + T_{overhead}
-$$
+$T_{parallel} = \frac{T_{sequential}}{N_{threads}} + T_{merge} + T_{overhead}$
 
 Where:
 - $T_{merge}$ is O(num_threads) for Welford merge
