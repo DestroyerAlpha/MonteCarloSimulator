@@ -41,6 +41,7 @@ std::vector<std::size_t> parse_thread_list(const std::string& arg) {
     return out;
 }
 
+// Lightweight flag parsing for the benchmarks
 Options parse_args(int argc, char** argv) {
     Options opts;
     for (int i = 1; i < argc; ++i) {
@@ -119,6 +120,7 @@ BenchRow bench_raw_loop(const Options& opts) {
     auto start = std::chrono::steady_clock::now();
     double sum = 0.0;
     double sumsq = 0.0;
+    // Plain loop to measure aggregation cost
     for (std::uint64_t i = 0; i < opts.samples; ++i) {
         double x = synthetic_value(i);
         sum += x;

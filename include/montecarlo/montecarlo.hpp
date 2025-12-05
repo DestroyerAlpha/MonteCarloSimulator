@@ -1,5 +1,5 @@
 #pragma once
-
+// One-stop header for the Monte Carlo bits
 #include "core/concepts.hpp"
 #include "core/result.hpp"
 #include "core/transform.hpp"

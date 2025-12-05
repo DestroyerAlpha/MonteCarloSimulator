@@ -15,7 +15,7 @@ class PiEstimationModel {
         double x = dist(rng);
         double y = dist(rng);
 
-        // Point is inside quarter circle if x^2 + y^2 <= 1
+        // Check if dart lands inside the quarter circle
         return (x * x + y * y <= 1.0) ? 1.0 : 0.0;
     }
 };

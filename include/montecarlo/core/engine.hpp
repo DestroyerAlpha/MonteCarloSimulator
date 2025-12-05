@@ -124,6 +124,7 @@ class SimulationEngine {
      * @brief Invoke model (handles both .trial() and operator() styles)
      */
     double invoke_model(auto& rng) const {
+        // Works with both trial and call styles
         if constexpr (requires { model_.trial(rng); }) {
             return model_.trial(rng);
         } else {
@@ -138,6 +139,7 @@ class SimulationEngine {
         const Aggregator& agg, std::uint64_t iterations,
         const std::chrono::steady_clock::time_point& start,
         const std::chrono::steady_clock::time_point& end) const {
+        // Collect stats into the result struct
         Result r;
         r.iterations = iterations;
         r.estimate = agg.result();

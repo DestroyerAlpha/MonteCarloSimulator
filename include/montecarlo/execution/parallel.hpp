@@ -22,6 +22,7 @@ class Parallel {
         for (size_t t = 0; t < num_threads_; ++t) {
             size_t thread_iters = iters_per_thread + (t < remaining ? 1 : 0);
             threads.emplace_back([model, &local_aggs, t, thread_iters, seed, rng_factory]() mutable {
+                // Bump seed per thread to dodge collisions
                 auto rng = rng_factory(seed + static_cast<uint64_t>(t));
                 for (std::uint64_t i = 0; i < thread_iters; ++i) {
                     double result;

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <iomanip>
 
-// Model for integrating f(x) = x^2 from 0 to 1
+// Simple x^2 integral on [0,1]
 // Analytical result: 1/3
 class SquareIntegrationModel {
  public:

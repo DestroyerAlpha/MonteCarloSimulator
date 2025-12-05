@@ -6,6 +6,7 @@
 
 namespace montecarlo {
 
+// Models with a trial(rng) hook land here
 template<typename Model, typename RNG>
 concept TrialModel = requires(Model m, RNG& rng) {
     { m.trial(rng) } -> std::convertible_to<double>;
@@ -24,6 +25,7 @@ concept Transform = requires(T transform, double value) {
     { transform(value) } -> std::convertible_to<double>;
 };
 
+// Aggregators just need add, result, and reset
 template<typename Aggregator, typename T>
 concept ResultAggregator = requires(Aggregator agg, T value) {
     { agg.add(value) } -> std::same_as<void>;
@@ -31,7 +33,7 @@ concept ResultAggregator = requires(Aggregator agg, T value) {
     { agg.reset() } -> std::same_as<void>;
 };
 
-// RNG factory concept: callable with a seed returning a UniformRandomBitGenerator
+// Factory returns a seeded random generator
 template<typename F>
 concept RngFactory = requires(F f, std::uint64_t s) {
     { f(s) };
