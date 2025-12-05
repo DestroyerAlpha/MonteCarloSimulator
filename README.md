@@ -1,171 +1,328 @@
 # MonteCarloSimulator
 
-MonteCarloSimulator is a small, header-first C++ library for building Monte Carlo experiments and numerical estimators. It provides:
+[![Build Status](https://github.com/DestroyerAlpha/MonteCarloSimulator/workflows/CI/badge.svg)](https://github.com/DestroyerAlpha/MonteCarloSimulator/actions)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
 
-- A generic, concept-driven `SimulationEngine` that accepts a model, an execution policy, an aggregator, and an optional transform.
-- Lightweight aggregators (Welford, histogram) and helpers for estimates and confidence intervals.
-- Execution policies: `execution::Sequential` (default) and `execution::Parallel` (threaded). GPU hooks exist behind the `MCLIB_ENABLE_GPU` CMake option.
+A modern, header-only C++ library for building high-performance Monte Carlo simulations and numerical estimators.
 
-The public API is exposed via the umbrella header `include/montecarlo/montecarlo.hpp`.
+## Features
 
-Repository layout
----------------
-- `include/` — public headers (namespace `montecarlo`).
-- `examples/` — standalone example programs (e.g. π estimation, option pricing).
-- `tests/` — small tests and sanity checks.
-- `CMakeLists.txt` — top-level build script and options.
-- `LICENSE` — project license.
+✨ **Modern C++20 Design**
+- Concept-driven API with compile-time type safety
+- Zero-cost abstractions through template metaprogramming
+- Clear, descriptive error messages
 
-Minimum requirements
---------------------
-- CMake 3.18+ (project uses features requiring 3.18+).
-- A C++20-capable compiler (project targets C++20 via CMake).
+🚀 **Flexible Execution Policies**
+- Sequential execution for small problems and debugging
+- Parallel execution with automatic thread management
+- GPU acceleration hooks (CUDA support planned)
 
-CMake options of interest
--------------------------
-- `MCLIB_BUILD_EXAMPLES` (ON/off) — build `examples/`.
-- `MCLIB_BUILD_TESTS` (ON/off) — build `tests/` and enable CTest.
-- `MCLIB_ENABLE_PARALLEL` (ON/off) — enable/disable parallel execution support (requires Threads).
-- `MCLIB_ENABLE_GPU` (OFF by default) — enable CUDA GPU hooks.
+📊 **Robust Statistical Aggregation**
+- Welford's algorithm for numerically stable variance computation
+- Histogram aggregation for distribution analysis
+- Extensible aggregator interface
 
-Quick build
------------
+🔧 **Composable Architecture**
+- Mix and match models, execution policies, aggregators, and transforms
+- Easy to extend with custom components
+- Plugin your own RNG implementations
+
+📦 **Header-Only & Easy Integration**
+- No linking required - just include headers
+- Minimal dependencies (C++20 standard library)
+- CMake integration support
+
+## Quick Start
+
+### Installation
+
 ```bash
-mkdir -p build
-cd build
+# Clone the repository
+git clone https://github.com/DestroyerAlpha/MonteCarloSimulator.git
+cd MonteCarloSimulator
+
+# Build examples and tests
+mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake --build . -- -j
-```
+cmake --build . -j
 
-Run examples (when `MCLIB_BUILD_EXAMPLES=ON`):
+# Run examples
+./examples/all_examples
 
-```bash
-./build/examples/all_examples
-```
-
-Run tests:
-
-```bash
-cd build
+# Run tests
 ctest --output-on-failure
 ```
 
-Public API overview
--------------------
-Key headers (public):
+### Your First Simulation
 
-- `#include <montecarlo/montecarlo.hpp>` — umbrella include.
-- `include/montecarlo/core/engine.hpp` — `SimulationEngine` and factory helpers (`make_engine`, `make_sequential_engine`, `make_parallel_engine`).
-- `include/montecarlo/core/result.hpp` — `Result`, `ConfidenceInterval`, `ci_95`, and aggregators (`WelfordAggregator`, `HistogramAggregator`).
-- `include/montecarlo/core/rng.hpp` — `make_rng` and `DefaultRngFactory` for reproducible RNG seeding.
-- `include/montecarlo/core/transform.hpp` — common transforms in `montecarlo::transform` (Identity, LinearScale, Exp, Indicator, ...).
-
-Concepts
---------
-The library uses C++20 concepts to describe valid models and components:
-
-- `TrialModel<Model, RNG>` — type `M` must provide `double M::trial(RNG& rng)`.
-- `CallableModel<Model, RNG>` — models may alternatively be callable via `double M::operator()(RNG& rng)`.
-- `SimulationModel` — either `TrialModel` or `CallableModel`.
-- `Transform` — callable that converts a `double` to `double`.
-- `ResultAggregator` — aggregator types must support `add()`, `result()`, and `reset()`.
- - `RngFactory` — a callable that accepts a `std::uint64_t` seed and returns a Uniform Random Bit Generator (URBG) type (for example, `std::mt19937_64`). The engine and execution policies accept a factory so users can inject custom RNG implementations or test stubs.
-
-Core types
-----------
-- `SimulationEngine<Model, Aggregator = WelfordAggregator<>, ExecutionPolicy = execution::Sequential, Transform = transform::Identity>` — main engine template. Use the provided factory helpers for convenience.
-- `Result` — returned by `SimulationEngine::run(...)` with fields:
-  - `estimate` (double)
-  - `variance` (double)
-  - `standard_error` (double)
-  - `iterations` (uint64_t)
-  - `elapsed_ms` (double)
-- `ConfidenceInterval` and helper `ci_95(const Result&)`.
-
-Factory helpers
----------------
-Use the helpers to create commonly-configured engines:
-
-- `make_sequential_engine(model, seed = 123456789ULL, transform = transform::Identity{})`
-- `make_parallel_engine(model, threads = 0, seed = 123456789ULL, transform = transform::Identity{})`
-
-Minimal example — π estimation (compile-ready)
----------------------------------------------
-This example uses the actual public API and compiles when the include path is set.
+Estimate π using Monte Carlo integration:
 
 ```cpp
 #include <montecarlo/montecarlo.hpp>
-#include <random>
 #include <iostream>
 
 struct PiModel {
     template<typename Rng>
-    double trial(Rng &rng) const {
-        std::uniform_real_distribution<double> U(0.0, 1.0);
-        double x = U(rng);
-        double y = U(rng);
+    double trial(Rng& rng) const {
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
+        double x = dist(rng), y = dist(rng);
+        return (x*x + y*y <= 1.0) ? 4.0 : 0.0;  // Inside unit circle
+    }
+};
+
+int main() {
+    auto engine = montecarlo::make_sequential_engine(PiModel{});
+    auto result = engine.run(1'000'000);
+    
+    std::cout << "π ≈ " << result.estimate 
+              << " ± " << result.standard_error << "\n";
+    std::cout << "Time: " << result.elapsed_ms << " ms\n";
+}
+```
+
+### Parallel Execution
+
+```cpp
+// Use all available CPU cores
+auto engine = montecarlo::make_parallel_engine(PiModel{});
+auto result = engine.run(10'000'000);
+```
+
+## Documentation
+
+- **[Design Documentation](DESIGN.md)** - Detailed architecture and design decisions
+- **[Examples](examples/)** - Complete working examples including:
+  - π estimation using circle method
+  - Option pricing (Black-Scholes)
+  - Numerical integration
+- **API Reference** - See inline documentation in headers
+
+The public API is exposed via the umbrella header `include/montecarlo/montecarlo.hpp`.
+
+## Repository Structure
+
+```
+MonteCarloSimulator/
+├── include/montecarlo/     # Public API headers
+│   ├── core/              # Core engine, concepts, aggregators
+│   └── execution/         # Execution policies (sequential, parallel, GPU)
+├── examples/              # Example applications
+├── tests/                 # Unit tests and sanity checks
+├── bench/                 # Performance benchmarks
+├── CMakeLists.txt         # Build configuration
+├── README.md              # This file
+├── DESIGN.md              # Architecture documentation
+└── LICENSE                # GPL v3
+```
+
+## Requirements
+
+- **CMake** 3.18 or later
+- **C++20-capable compiler**:
+  - GCC 10+
+  - Clang 12+
+  - MSVC 2019 16.8+
+- **Optional**: CUDA Toolkit (for GPU support)
+
+## Build Configuration
+
+Customize the build with CMake options:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `MCLIB_BUILD_EXAMPLES` | ON | Build example programs |
+| `MCLIB_BUILD_TESTS` | ON | Build tests and enable CTest |
+| `MCLIB_BUILD_BENCHMARKS` | ON | Build performance benchmarks |
+| `MCLIB_ENABLE_PARALLEL` | ON | Enable multi-threaded execution |
+| `MCLIB_ENABLE_GPU` | OFF | Enable CUDA GPU acceleration |
+
+**Example:**
+```bash
+cmake -DMCLIB_ENABLE_PARALLEL=ON -DMCLIB_BUILD_EXAMPLES=ON ..
+```
+
+## API Overview
+
+### Core Headers
+
+| Header | Components | Description |
+|--------|------------|-------------|
+| `montecarlo/montecarlo.hpp` | All-in-one | Umbrella header including all components |
+| `core/engine.hpp` | `SimulationEngine`, factories | Main engine and convenience helpers |
+| `core/result.hpp` | `Result`, `ConfidenceInterval` | Statistical results and aggregators |
+| `core/rng.hpp` | `make_rng`, `DefaultRngFactory` | Random number generation |
+| `core/transform.hpp` | Transforms | Data transformation functions |
+| `core/concepts.hpp` | Concepts | Type constraints |
+
+### C++20 Concepts
+
+The library uses concepts for compile-time type safety:
+
+| Concept | Requirements | Purpose |
+|---------|--------------|---------||
+| `SimulationModel<M, RNG>` | `M::trial(RNG&)` or `M::operator()(RNG&)` | Defines trial logic |
+| `ResultAggregator<A>` | `add()`, `result()`, `reset()` | Collects trial results |
+| `Transform<T>` | `operator()(double) -> double` | Post-processes values |
+| `RngFactory<F>` | `operator()(uint64_t) -> URBG` | Creates RNG instances |
+
+### Core Types
+
+**`SimulationEngine<Model, Aggregator, ExecutionPolicy, Transform>`**
+
+Main simulation coordinator (all template parameters have sensible defaults).
+
+**`Result`** - Simulation output containing:
+- `estimate` - Mean value
+- `variance` - Sample variance
+- `standard_error` - Standard error of the mean
+- `iterations` - Number of trials executed
+- `elapsed_ms` - Execution time in milliseconds
+
+**`ConfidenceInterval`** - Statistical interval with helpers like `ci_95(result)`
+
+### Factory Functions
+
+Convenience helpers for common configurations:
+
+```cpp
+// Sequential execution (single-threaded)
+auto engine = make_sequential_engine(model, seed);
+
+// Parallel execution (multi-threaded)
+auto engine = make_parallel_engine(model, num_threads, seed);
+
+// Full customization
+auto engine = make_engine<Model, Policy, Aggregator, Transform>(
+    model, policy, seed, rng_factory, transform
+);
+```
+
+## Usage Examples
+
+### Basic Example: Estimating π
+
+```cpp
+#include <montecarlo/montecarlo.hpp>
+#include <iostream>
+
+struct PiModel {
+    template<typename Rng>
+    double trial(Rng& rng) const {
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
+        double x = dist(rng);
+        double y = dist(rng);
+        // Return 1 if point is inside unit circle, 0 otherwise
         return (x * x + y * y <= 1.0) ? 1.0 : 0.0;
     }
 };
 
 int main() {
     using namespace montecarlo;
-
-    PiModel model;
-    auto engine = make_sequential_engine(model); // uses execution::Sequential and Identity transform
-
-    std::uint64_t N = 1'000'000;
-    Result r = engine.run(N);
-
-    auto ci = ci_95(r);
-    std::cout << "pi estimate = " << r.estimate * 4.0 << " (raw mean=" << r.estimate << ")\n";
-    std::cout << "stderr=" << r.standard_error * 4.0 << " 95% CI=[" << (ci.lower * 4.0) << ", " << (ci.upper * 4.0) << "]\n";
-    std::cout << "time ms=" << r.elapsed_ms << "\n";
-    return 0;
+    
+    auto engine = make_sequential_engine(PiModel{});
+    auto result = engine.run(1'000'000);
+    
+    // Multiply by 4 to get π (quarter circle → full circle)
+    double pi_estimate = result.estimate * 4.0;
+    auto ci = ci_95(result);
+    
+    std::cout << "π estimate: " << pi_estimate << "\n";
+    std::cout << "95% CI: [" << ci.lower * 4.0 << ", " 
+              << ci.upper * 4.0 << "]\n";
+    std::cout << "Std error: " << result.standard_error * 4.0 << "\n";
+    std::cout << "Time: " << result.elapsed_ms << " ms\n";
 }
 ```
 
-Notes: the example above assumes the model's `trial()` returns the indicator (1 inside quarter circle, 0 otherwise). We multiply by 4 when reporting π.
+### Parallel Execution
 
-Parallel example
-----------------
-If `MCLIB_ENABLE_PARALLEL` is enabled, construct a parallel engine with the convenience factory:
+Speed up computation using multiple threads:
 
 ```cpp
 #include <montecarlo/montecarlo.hpp>
-#include <iostream>
+#include <thread>
 
 int main() {
     using namespace montecarlo;
-    PiModel model;
-    auto engine = make_parallel_engine(model, /*threads=*/std::thread::hardware_concurrency());
-    auto r = engine.run(5'000'000);
-    std::cout << "Parallel estimate (raw mean) = " << r.estimate << "\n";
+    
+    // Use all available CPU cores
+    auto engine = make_parallel_engine(
+        PiModel{},
+        std::thread::hardware_concurrency()
+    );
+    
+    auto result = engine.run(10'000'000);
+    std::cout << "Parallel π estimate: " << result.estimate * 4.0 << "\n";
 }
 ```
 
-Advanced topics
----------------
-- Replace the default aggregator with `WelfordAggregator<>` (default) or `HistogramAggregator<>` to collect distributional information.
-- Use `transform::LinearScale`, `transform::Indicator`, or compose transforms to adapt raw trial output into estimands.
-- For reproducible parallel runs, `make_rng(seed, stream_id)` and the engine's `seed()` / `set_seed()` methods are available.
+## Advanced Usage
 
-RNG factory and injection
--------------------------
-The library exposes an `RngFactory` concept: a callable that takes a `std::uint64_t` and returns a type satisfying `std::uniform_random_bit_generator`. A default implementation `DefaultRngFactory` is provided (it returns an `std::mt19937_64` seeded with `make_rng`).
+### Custom Aggregators
 
-Why inject a factory?
-- Lets users choose different RNG engines (PCG, xorshift, std engines, or cryptographic generators).
-- Enables deterministic, reproducible tests by injecting a `StubFactory` that returns a trivial generator.
-- Keeps execution policies generic while allowing them to create per-worker RNG instances.
-
-How parallel seeding works
-- Execution policies derive per-worker seeds from the base seed. The current policy implementation uses `rng_factory(base_seed + thread_id)` to give each worker a deterministic, distinct stream. This is simple and portable; if you need sophisticated streams, provide a factory that internally uses `std::seed_seq` or a two-argument `make_rng(seed, stream_id)` helper.
-
-Example: stub RNG factory for tests
+Use `HistogramAggregator` to analyze distributions:
 
 ```cpp
-// A tiny deterministic stub generator (meets URBG requirements)
+using namespace montecarlo;
+
+HistogramAggregator<> hist(100, 0.0, 1.0);  // 100 bins, range [0,1]
+auto engine = SimulationEngine<PiModel, HistogramAggregator<>>(
+    PiModel{}, execution::Sequential{}, transform::Identity{}, 
+    DefaultRngFactory{}, 42
+);
+auto result = engine.run(10000);
+// Access histogram bins: hist.histogram()
+```
+
+### Transforms
+
+Apply transformations to trial results:
+
+```cpp
+using namespace montecarlo;
+
+// Linear scaling: y = 2x + 1
+auto engine = make_sequential_engine(
+    model, 42, transform::LinearScale{2.0, 1.0}
+);
+
+// Indicator function: estimate P(X > threshold)
+auto engine2 = make_sequential_engine(
+    model, 42, transform::Indicator{0.5, true}
+);
+```
+
+### Reproducibility
+
+Control random number generation for deterministic results:
+
+```cpp
+// Set seed explicitly
+auto engine = make_sequential_engine(model, /*seed=*/12345);
+
+// Change seed dynamically
+engine.set_seed(67890);
+
+// Or use simulate() with custom seed
+auto result = engine.simulate(1000, /*seed=*/99999);
+```
+
+## Custom RNG Factories
+
+The library supports custom random number generators through the `RngFactory` concept.
+
+### Why Custom RNG Factories?
+
+- **Flexibility**: Use PCG, xorshift, or cryptographic generators
+- **Testing**: Inject deterministic stubs for unit tests
+- **Performance**: Optimize for specific use cases
+- **Parallel Independence**: Each thread gets its own RNG stream
+
+### Example: Stub RNG for Testing
+
+```cpp
+// Deterministic generator for unit tests
 struct StubRng {
     using result_type = uint64_t;
     result_type operator()() { return 42; }
@@ -174,28 +331,36 @@ struct StubRng {
 };
 
 struct StubFactory {
-    StubRng operator()(std::uint64_t) const noexcept { return StubRng{}; }
-};
-
-// Use in tests
-PiModel model;
-auto engine = make_sequential_engine(model, StubFactory{}, /*seed*/ 0);
-auto r = engine.run(1000); // deterministic output from stub RNG
-```
-
-Example: custom RNG (PCG-like) factory
-
-```cpp
-struct MyPcgFactory {
-    std::mt19937_64 operator()(std::uint64_t seed) const {
-        // initialize your PCG or other engine here; using mt19937_64 as a placeholder
-        return ::montecarlo::make_rng(seed);
+    StubRng operator()(std::uint64_t) const noexcept { 
+        return StubRng{}; 
     }
 };
 
-auto engine = make_parallel_engine(model, /*threads=*/4, MyPcgFactory{}, /*seed=*/42);
+// Use in tests for reproducible results
+auto engine = make_sequential_engine(PiModel{}, StubFactory{}, 0);
+auto result = engine.run(1000);  // Always produces same output
 ```
 
-License
--------
-See the `LICENSE` file at the repository root.
+### Example: Custom RNG Engine
+
+```cpp
+struct CustomRngFactory {
+    std::mt19937_64 operator()(std::uint64_t seed) const {
+        // Use your preferred RNG (PCG, xorshift, etc.)
+        return montecarlo::make_rng(seed);
+    }
+};
+
+auto engine = make_parallel_engine(
+    model, /*threads=*/4, CustomRngFactory{}, /*seed=*/42
+);
+```
+
+### Parallel RNG Seeding
+
+Each thread receives a unique, deterministic seed:
+- Thread 0: `base_seed + 0`
+- Thread 1: `base_seed + 1`
+- Thread N: `base_seed + N`
+
+This ensures independent, reproducible random streams across threads.
