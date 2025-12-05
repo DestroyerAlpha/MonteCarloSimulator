@@ -4,3 +4,4 @@
 void run_pi_estimation();
 void run_option_pricing();
 void run_numerical_integration();
+void run_dice_roll();

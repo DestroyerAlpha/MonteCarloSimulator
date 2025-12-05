@@ -49,7 +49,7 @@ void run_option_pricing() {
     EuropeanCallOption model(100.0, 100.0, 0.05, 0.20, 1.0);
     double analytical = model.analytical_price();
     std::cout << "\n=== European Call Option Pricing ===" << std::endl;
-    std::cout << "True Price using Black-Scholes Model: " << analytical << std::endl;
+    std::cout << "True Price using Black-Scholes Model: " << analytical << std::endl << std::endl;
     // Parameters: S0=100, K=100, r=5%, sigma=20%, T=1 year
     std::vector<size_t> sample_sizes {1'000, 10'000, 100'000, 1'000'000, 10'000'000};
 

@@ -96,6 +96,7 @@ auto result = engine.run(10'000'000);
   - π estimation using circle method
   - Option pricing (Black-Scholes)
   - Numerical integration
+  - Dice roll expectation estimation
 - **API Reference** - See inline documentation in headers
 
 The public API is exposed via the umbrella header `include/montecarlo/montecarlo.hpp`.
