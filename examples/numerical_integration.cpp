@@ -35,43 +35,115 @@ void run_numerical_integration() {
 
     std::cout << "\n1D Integration: ∫₀¹ x² dx" << std::endl;
     std::cout << "Analytical result: " << 1.0/3.0 << std::endl << std::endl;
+    std::vector<size_t> sample_sizes {1'000, 10'000, 100'000, 1'000'000, 10'000'000};
 
     SquareIntegrationModel model1d;
-#ifdef MCLIB_PARALLEL_ENABLED
-    auto engine1d = montecarlo::make_parallel_engine(model1d);
-#else
-    auto engine1d = montecarlo::make_sequential_engine(model1d);
-#endif
+    std::cout << "Sequential Execution:" << std::endl;
+    std::cout << std::string(70, '-') << std::endl;
+    std::cout << std::setw(12) << "Samples"
+              << std::setw(15) << "Estimate"
+              << std::setw(15) << "Error"
+              << std::setw(15) << "Std Error"
+              << std::setw(13) << "Time (ms)" << std::endl;
+    std::cout << std::string(70, '-') << std::endl;
 
-    for (size_t n : {1'000, 10'000, 100'000, 1'000'000, 10'000'000}) {
-        auto result = engine1d.run(n);
+    for (size_t n : sample_sizes) {
+        auto engine = montecarlo::make_engine(model1d, montecarlo::execution::Sequential{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::Identity{});
+        auto result = engine.run(n);
+
         double error = std::abs(result.estimate - 1.0/3.0);
 
-        std::cout << "N = " << std::setw(7) << n 
-                  << ", Estimate = " << std::fixed << std::setprecision(6) << result.estimate
-                  << ", Error = " << std::scientific << std::setprecision(2) << error
-                  << ", Time (ms)= " << std::fixed << std::setprecision(4) << result.elapsed_ms << "s"
-                  << std::endl;
+        std::cout << std::setw(12) << result.iterations
+        << std::setw(15) << std::fixed << std::setprecision(6) << result.estimate
+        << std::setw(15) << std::scientific << std::setprecision(2) << error
+        << std::setw(15) << std::fixed << std::setprecision(6)
+        << result.standard_error << std::setw(13) << std::fixed
+        << std::setprecision(4) << result.elapsed_ms << std::endl;
     }
 
+#ifdef MCLIB_PARALLEL_ENABLED
+    std::cout << "\nParallel Execution:" << std::endl;
+    std::cout << std::string(70, '-') << std::endl;
+    std::cout << std::setw(12) << "Samples"
+              << std::setw(15) << "Estimate"
+              << std::setw(15) << "Error"
+              << std::setw(15) << "Std Error"
+              << std::setw(13) << "Time (ms)" << std::endl;
+    std::cout << std::string(70, '-') << std::endl;
+
+    for (size_t n : sample_sizes) {
+        auto engine = montecarlo::make_engine(model1d, montecarlo::execution::Parallel{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::Identity{});
+        auto result = engine.run(n);
+
+        double error = std::abs(result.estimate - 1.0/3.0);
+
+        std::cout << std::setw(12) << result.iterations
+        << std::setw(15) << std::fixed << std::setprecision(6) << result.estimate
+        << std::setw(15) << std::scientific << std::setprecision(2) << error
+        << std::setw(15) << std::fixed << std::setprecision(6)
+        << result.standard_error << std::setw(13) << std::fixed
+        << std::setprecision(4) << result.elapsed_ms << std::endl;
+    }
+#else
+    std::cout << std::endl
+    << "Parallel execution not enabled."
+    << "Rebuild with -DMCLIB_ENABLE_PARALLEL=ON"
+    << std::endl;
+#endif
     std::cout << "\n3D Integration: ∫∫∫ (x² + y² + z²) dx dy dz over [0,1]³" << std::endl;
     std::cout << "Analytical result: 1.0" << std::endl << std::endl;
 
     MultivarIntegrationModel model3d;
-#ifdef MCLIB_PARALLEL_ENABLED
-    auto engine3d = montecarlo::make_parallel_engine(model3d);
-#else
-    auto engine3d = montecarlo::make_sequential_engine(model3d);
-#endif
+    std::cout << "Sequential Execution:" << std::endl;
+    std::cout << std::string(70, '-') << std::endl;
+    std::cout << std::setw(12) << "Samples"
+              << std::setw(15) << "Estimate"
+              << std::setw(15) << "Error"
+              << std::setw(15) << "Std Error"
+              << std::setw(13) << "Time (ms)" << std::endl;
+    std::cout << std::string(70, '-') << std::endl;
 
-    for (size_t n : {1'000, 10'000, 100'000, 1'000'000, 10'000'000}) {
-        auto result = engine3d.run(n);
+    for (size_t n : sample_sizes) {
+        auto engine = montecarlo::make_engine(model3d, montecarlo::execution::Sequential{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::Identity{});
+        auto result = engine.run(n);
+
         double error = std::abs(result.estimate - 1.0);
 
-        std::cout << "N = " << std::setw(7) << n 
-                  << ", Estimate = " << std::fixed << std::setprecision(6) << result.estimate
-                  << ", Error = " << std::scientific << std::setprecision(2) << error
-                  << ", Time (ms)= " << std::fixed << std::setprecision(4) << result.elapsed_ms << "s"
-                  << std::endl;
+        std::cout << std::setw(12) << result.iterations
+        << std::setw(15) << std::fixed << std::setprecision(6) << result.estimate
+        << std::setw(15) << std::scientific << std::setprecision(2) << error
+        << std::setw(15) << std::fixed << std::setprecision(6)
+        << result.standard_error << std::setw(13) << std::fixed
+        << std::setprecision(4) << result.elapsed_ms << std::endl;
     }
+
+#ifdef MCLIB_PARALLEL_ENABLED
+    std::cout << "\nParallel Execution:" << std::endl;
+    std::cout << std::string(70, '-') << std::endl;
+    std::cout << std::setw(12) << "Samples"
+              << std::setw(15) << "Estimate"
+              << std::setw(15) << "Error"
+              << std::setw(15) << "Std Error"
+              << std::setw(13) << "Time (ms)" << std::endl;
+    std::cout << std::string(70, '-') << std::endl;
+
+    for (size_t n : sample_sizes) {
+        auto engine = montecarlo::make_engine(model3d, montecarlo::execution::Parallel{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::Identity{});
+        auto result = engine.run(n);
+
+        double error = std::abs(result.estimate - 1.0);
+
+        std::cout << std::setw(12) << result.iterations
+        << std::setw(15) << std::fixed << std::setprecision(6) << result.estimate
+        << std::setw(15) << std::scientific << std::setprecision(2) << error
+        << std::setw(15) << std::fixed << std::setprecision(6)
+        << result.standard_error << std::setw(13) << std::fixed
+        << std::setprecision(4) << result.elapsed_ms << std::endl;
+    }
+#else
+    std::cout << std::endl
+    << "Parallel execution not enabled."
+    << "Rebuild with -DMCLIB_ENABLE_PARALLEL=ON"
+    << std::endl;
+#endif
 }

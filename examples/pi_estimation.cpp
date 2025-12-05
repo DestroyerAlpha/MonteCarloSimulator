@@ -16,7 +16,7 @@ class PiEstimationModel {
         double y = dist(rng);
 
         // Point is inside quarter circle if x^2 + y^2 <= 1
-        return (x * x + y * y <= 1.0) ? 4.0 : 0.0;
+        return (x * x + y * y <= 1.0) ? 1.0 : 0.0;
     }
 };
 
@@ -38,7 +38,7 @@ void run_pi_estimation() {
     std::cout << std::string(70, '-') << std::endl;
 
     for (size_t n : sample_sizes) {
-        auto engine = montecarlo::make_sequential_engine(model);
+        auto engine = montecarlo::make_engine(model, montecarlo::execution::Sequential{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::LinearScale(4.0, 0.0));
         auto result = engine.run(n);
 
         double error = std::abs(result.estimate - M_PI);
@@ -62,7 +62,7 @@ void run_pi_estimation() {
     std::cout << std::string(70, '-') << std::endl;
 
     for (size_t n : sample_sizes) {
-        auto engine = montecarlo::make_parallel_engine(model);
+        auto engine = montecarlo::make_engine(model, montecarlo::execution::Parallel{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::LinearScale(4.0, 0.0));
         auto result = engine.run(n);
 
         double error = std::abs(result.estimate - M_PI);
