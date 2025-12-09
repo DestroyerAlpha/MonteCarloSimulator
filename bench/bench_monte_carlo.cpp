@@ -29,6 +29,7 @@ double to_ms(std::chrono::steady_clock::duration d) {
     return std::chrono::duration<double, std::milli>(d).count();
 }
 
+// Parse comma-separated thread counts into a vector
 std::vector<std::size_t> parse_thread_list(const std::string& arg) {
     std::vector<std::size_t> out;
     std::stringstream ss(arg);
@@ -73,6 +74,7 @@ Options parse_args(int argc, char** argv) {
     return opts;
 }
 
+// Simple uniform [0,1) generator for the sample model
 struct UniformModel {
     template <typename RNG>
     double operator()(RNG& rng) const {
@@ -81,6 +83,7 @@ struct UniformModel {
     }
 };
 
+// One CSV row worth of benchmark data
 struct BenchRow {
     std::string section;
     std::size_t threads;
@@ -92,6 +95,7 @@ struct BenchRow {
     double variance;
 };
 
+// Run the engine with the requested thread count and collect timing and stats
 BenchRow run_engine(std::size_t threads, int run_idx, const Options& opts) {
     UniformModel model;
     std::uint64_t samples = opts.samples;
@@ -112,10 +116,12 @@ BenchRow run_engine(std::size_t threads, int run_idx, const Options& opts) {
     return {"engine", 1, run_idx, samples, r.elapsed_ms, throughput, r.estimate, r.variance};
 }
 
+// Deterministic value generator for aggregator-only benchmarks
 double synthetic_value(std::uint64_t i) {
     return static_cast<double>(i % 1024) / 1024.0;
 }
 
+// Baseline loop that manually accumulates mean and variance
 BenchRow bench_raw_loop(const Options& opts) {
     auto start = std::chrono::steady_clock::now();
     double sum = 0.0;
@@ -138,6 +144,7 @@ BenchRow bench_raw_loop(const Options& opts) {
     return {"aggregator_raw", 0, 0, opts.samples, elapsed_ms, throughput, mean, variance};
 }
 
+// Compare against using the Welford aggregator helper
 BenchRow bench_welford_loop(const Options& opts) {
     WelfordAggregator<> agg;
     auto start = std::chrono::steady_clock::now();
@@ -150,6 +157,7 @@ BenchRow bench_welford_loop(const Options& opts) {
     return {"aggregator_welford", 0, 0, opts.samples, elapsed_ms, throughput, agg.result(), agg.variance()};
 }
 
+// RNG loop without engine abstractions to gauge overhead
 BenchRow bench_manual_rng(const Options& opts) {
     auto rng = montecarlo::make_rng(opts.seed);
     std::uniform_real_distribution<double> dist(0.0, 1.0);
@@ -166,6 +174,7 @@ BenchRow bench_manual_rng(const Options& opts) {
     return {"abstraction_manual_rng", 1, 0, opts.samples, elapsed_ms, throughput, agg.result(), agg.variance()};
 }
 
+// RNG loop that runs through the engine abstraction for comparison
 BenchRow bench_engine_rng(const Options& opts) {
     UniformModel model;
     auto engine = make_sequential_engine(model, opts.seed);
@@ -174,6 +183,7 @@ BenchRow bench_engine_rng(const Options& opts) {
     return {"abstraction_engine_rng", 1, 0, opts.samples, r.elapsed_ms, throughput, r.estimate, r.variance};
 }
 
+// Emit one CSV-formatted line
 void print_row(const BenchRow& row) {
     std::cout << row.section << ","
               << row.threads << ","
@@ -189,8 +199,10 @@ void print_row(const BenchRow& row) {
 
 int main(int argc, char** argv) {
     try {
+        // Parse CLI flags and set up defaults
         Options opts = parse_args(argc, argv);
 
+        // CSV header so results can be piped into a file or spreadsheet
         std::cout << "section,threads,run,samples,elapsed_ms,throughput,estimate,variance\n";
 
         for (std::size_t threads : opts.threads) {

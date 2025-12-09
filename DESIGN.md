@@ -1,3 +1,13 @@
+---
+title: Design Documentation - MonteCarloSimulator Library
+header-includes:
+  - \usepackage{fancyhdr}
+  - \pagestyle{fancy}
+  - \fancyhf{}
+  - \rhead{\thepage}
+  - \renewcommand{\headrulewidth}{0pt}
+---
+
 # Design Documentation - MonteCarloSimulator Library
 
 ## Table of Contents
@@ -224,14 +234,12 @@ Aggregators collect trial results and compute summary statistics. They must sati
 **Mathematical Foundation**:
 
 For running mean and variance:
-$$
 \begin{align}
 \delta &= x_n - \mu_{n-1} \\
 \mu_n &= \mu_{n-1} + \frac{\delta}{n} \\
 M_{2,n} &= M_{2,n-1} + \delta \cdot (x_n - \mu_n) \\
 \sigma^2 &= \frac{M_2}{n-1}
 \end{align}
-$$
 
 **Merge Operation** (Chan's Algorithm):
 ```cpp
@@ -317,7 +325,7 @@ auto engine = make_sequential_engine(
     transform::Indicator{threshold, true}  // Returns 1 if > threshold
 );
 auto result = engine.run(1000000);
-// result.estimate ≈ P(X > threshold)
+// result.estimate is roughly P(X > threshold)
 ```
 
 ### 2.5 Random Number Generation
@@ -634,19 +642,19 @@ Where:
 - N = number of threads
 
 For typical Monte Carlo:
-- f ≈ 0.001 (merge is negligible)
-- Theoretical speedup ≈ N for large iteration counts
+- f is approximately 0.001 (merge is negligible)
+- Theoretical speedup is approximately N for large iteration counts
 
 ### 5.2 Memory Layout and Cache Efficiency
 
 #### Engine Memory Layout
 ```
 SimulationEngine object:
-├─ model_           [sizeof(Model)]
-├─ policy_          [sizeof(ExecutionPolicy)]
-├─ transform_       [sizeof(Transform)]
-├─ rng_factory_     [sizeof(RngFactory)]
-└─ base_seed_       [8 bytes]
+|- model_           [sizeof(Model)]
+|- policy_          [sizeof(ExecutionPolicy)]
+|- transform_       [sizeof(Transform)]
+|- rng_factory_     [sizeof(RngFactory)]
+`- base_seed_       [8 bytes]
 ```
 
 **Small Object Optimization**:
