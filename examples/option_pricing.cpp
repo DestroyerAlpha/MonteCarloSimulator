@@ -7,6 +7,7 @@
 // Black-Scholes European Call Option pricing model
 class EuropeanCallOption {
  public:
+    // Store the option parameters needed for each Monte Carlo draw
     EuropeanCallOption(double S0, double K, double r, double sigma, double T)
         : S0_(S0), K_(K), r_(r), sigma_(sigma), T_(T) {}
 
@@ -46,13 +47,17 @@ class EuropeanCallOption {
 };
 
 void run_option_pricing() {
+    // Set up a 1-year at-the-money call with 5% rate and 20% volatility
     EuropeanCallOption model(100.0, 100.0, 0.05, 0.20, 1.0);
+    // Closed-form Black-Scholes price for comparison
     double analytical = model.analytical_price();
     std::cout << "\n=== European Call Option Pricing ===" << std::endl;
     std::cout << "True Price using Black-Scholes Model: " << analytical << std::endl << std::endl;
     // Parameters: S0=100, K=100, r=5%, sigma=20%, T=1 year
+    // Sample counts to see how estimate and error behave
     std::vector<size_t> sample_sizes {1'000, 10'000, 100'000, 1'000'000, 10'000'000};
 
+    // Header for sequential runs
     std::cout << "Sequential Execution:" << std::endl;
     std::cout << std::string(70, '-') << std::endl;
     std::cout << std::setw(12) << "Samples"
@@ -87,6 +92,7 @@ void run_option_pricing() {
     std::cout << std::string(70, '-') << std::endl;
 
     for (size_t n : sample_sizes) {
+        // Parallel engine to compare speed and precision
         auto engine = montecarlo::make_engine(model, montecarlo::execution::Parallel{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::Identity{});
         auto result = engine.run(n);
 
@@ -100,6 +106,7 @@ void run_option_pricing() {
         << std::setprecision(4) << result.elapsed_ms << std::endl;
     }
 #else
+    // Friendly note when the binary lacks parallel support
     std::cout << std::endl
     << "Parallel execution not enabled."
     << "Rebuild with -DMCLIB_ENABLE_PARALLEL=ON"

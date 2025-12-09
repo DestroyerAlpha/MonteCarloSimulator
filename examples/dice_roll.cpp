@@ -7,13 +7,16 @@
 #include "example_functions.hpp"
 
 void run_dice_roll() {
+    // Simple fair die model that returns values 1 through 6
     auto dice_roll = [](auto& rng) {
         std::uniform_int_distribution<int> dist(1, 6);
         return static_cast<double>(dist(rng));
     };
+    // Sample sizes to see convergence as we crank iterations
     std::vector<size_t> sample_sizes {1'000, 10'000, 100'000, 1'000'000, 10'000'000};
     std::cout << "\n=== Dice Roll Expectation Estimation ===" << std::endl;
     std::cout<< "Expectation value of a fair six-sided die is 3.5" << std::endl << std::endl;
+    // Header for sequential runs
     std::cout << "Sequential Execution:" << std::endl;
     std::cout << std::string(70, '-') << std::endl;
     std::cout << std::setw(12) << "Samples"
@@ -24,6 +27,7 @@ void run_dice_roll() {
     std::cout << std::string(70, '-') << std::endl;
 
     for (size_t n : sample_sizes) {
+        // Sequential engine using default RNG and identity transform
         auto engine = montecarlo::make_engine(dice_roll, montecarlo::execution::Sequential{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::Identity{});
         auto result = engine.run(n);
 
@@ -48,6 +52,7 @@ void run_dice_roll() {
     std::cout << std::string(70, '-') << std::endl;
 
     for (size_t n : sample_sizes) {
+        // Parallel engine to compare speed and precision at the same sample counts
         auto engine = montecarlo::make_engine(dice_roll, montecarlo::execution::Parallel{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::Identity{});
         auto result = engine.run(n);
 
@@ -61,6 +66,7 @@ void run_dice_roll() {
         << std::setprecision(4) << result.elapsed_ms << std::endl;
     }
 #else
+    // Friendly note when the binary was built without parallel support
     std::cout << std::endl
     << "Parallel execution not enabled."
     << "Rebuild with -DMCLIB_ENABLE_PARALLEL=ON"

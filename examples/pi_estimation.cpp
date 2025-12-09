@@ -24,10 +24,13 @@ void run_pi_estimation() {
     std::cout << "=== Pi Estimation using Monte Carlo ===" << std::endl;
     std::cout << "True value of Pi: " << M_PI << std::endl << std::endl;
 
+    // Quarter-circle hit counter becomes our PI estimator after scaling
     PiEstimationModel model;
 
+    // Sample sizes to watch the estimate converge
     std::vector<size_t> sample_sizes {1'000, 10'000, 100'000, 1'000'000, 10'000'000};
 
+    // Header for sequential runs
     std::cout << "Sequential Execution:" << std::endl;
     std::cout << std::string(70, '-') << std::endl;
     std::cout << std::setw(12) << "Samples"
@@ -62,6 +65,7 @@ void run_pi_estimation() {
     std::cout << std::string(70, '-') << std::endl;
 
     for (size_t n : sample_sizes) {
+        // Parallel engine to see scaling benefits
         auto engine = montecarlo::make_engine(model, montecarlo::execution::Parallel{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::LinearScale(4.0, 0.0));
         auto result = engine.run(n);
 
@@ -75,6 +79,7 @@ void run_pi_estimation() {
         << std::setprecision(4) << result.elapsed_ms << std::endl;
     }
 #else
+    // Friendly note when parallel support is not compiled in
     std::cout << std::endl
     << "Parallel execution not enabled."
     << "Rebuild with -DMCLIB_ENABLE_PARALLEL=ON"

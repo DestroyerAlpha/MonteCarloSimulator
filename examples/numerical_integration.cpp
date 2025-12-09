@@ -35,6 +35,7 @@ void run_numerical_integration() {
 
     std::cout << "\n1D Integration: ∫₀¹ x² dx" << std::endl;
     std::cout << "Analytical result: " << 1.0/3.0 << std::endl << std::endl;
+    // Sample sizes to watch convergence in 1D
     std::vector<size_t> sample_sizes {1'000, 10'000, 100'000, 1'000'000, 10'000'000};
 
     SquareIntegrationModel model1d;
@@ -48,6 +49,7 @@ void run_numerical_integration() {
     std::cout << std::string(70, '-') << std::endl;
 
     for (size_t n : sample_sizes) {
+        // Sequential engine for the 1D integral
         auto engine = montecarlo::make_engine(model1d, montecarlo::execution::Sequential{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::Identity{});
         auto result = engine.run(n);
 
@@ -72,6 +74,7 @@ void run_numerical_integration() {
     std::cout << std::string(70, '-') << std::endl;
 
     for (size_t n : sample_sizes) {
+        // Parallel engine for the 1D integral
         auto engine = montecarlo::make_engine(model1d, montecarlo::execution::Parallel{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::Identity{});
         auto result = engine.run(n);
 
@@ -85,6 +88,7 @@ void run_numerical_integration() {
         << std::setprecision(4) << result.elapsed_ms << std::endl;
     }
 #else
+    // Friendly note when parallel support is not compiled in
     std::cout << std::endl
     << "Parallel execution not enabled."
     << "Rebuild with -DMCLIB_ENABLE_PARALLEL=ON"
@@ -104,6 +108,7 @@ void run_numerical_integration() {
     std::cout << std::string(70, '-') << std::endl;
 
     for (size_t n : sample_sizes) {
+        // Sequential engine for the 3D integral
         auto engine = montecarlo::make_engine(model3d, montecarlo::execution::Sequential{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::Identity{});
         auto result = engine.run(n);
 
@@ -128,6 +133,7 @@ void run_numerical_integration() {
     std::cout << std::string(70, '-') << std::endl;
 
     for (size_t n : sample_sizes) {
+        // Parallel engine for the 3D integral
         auto engine = montecarlo::make_engine(model3d, montecarlo::execution::Parallel{}, 42ULL, montecarlo::DefaultRngFactory{}, montecarlo::transform::Identity{});
         auto result = engine.run(n);
 
@@ -141,6 +147,7 @@ void run_numerical_integration() {
         << std::setprecision(4) << result.elapsed_ms << std::endl;
     }
 #else
+    // Friendly note when parallel support is not compiled in
     std::cout << std::endl
     << "Parallel execution not enabled."
     << "Rebuild with -DMCLIB_ENABLE_PARALLEL=ON"

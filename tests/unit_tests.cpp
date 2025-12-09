@@ -15,11 +15,11 @@
 
 using namespace montecarlo;
 
-// --------------------------- Tiny test harness ----------------------------
 struct TestFailure : public std::runtime_error {
     explicit TestFailure(const std::string& msg) : std::runtime_error(msg) {}
 };
 
+// Minimal assertion helpers to keep dependencies light
 #define EXPECT_TRUE(cond, msg)                                                     \
     do {                                                                          \
         if (!(cond)) {                                                            \
@@ -63,6 +63,7 @@ struct ConstantOneModel {
     }
 };
 
+// RNG that increments on each call for deterministic sequences
 struct IncrementingRng {
     using result_type = std::uint64_t;
     explicit IncrementingRng(std::uint64_t start = 0) : state(start) {}
@@ -72,12 +73,14 @@ struct IncrementingRng {
     std::uint64_t state;
 };
 
+// Factory that seeds the incrementing RNG
 struct IncrementingFactory {
     IncrementingRng operator()(std::uint64_t seed) const noexcept {
         return IncrementingRng(seed);
     }
 };
 
+// Simple uniform [0,1) sampler
 struct Uniform01Model {
     template <typename RNG>
     double operator()(RNG& rng) const {
@@ -87,6 +90,7 @@ struct Uniform01Model {
 };
 
 // Test cases
+// Verify Welford stats on a small fixed dataset
 void test_welford_basic_stats() {
     WelfordAggregator<> agg;
     std::vector<double> values{1.0, 2.0, 3.0, 4.0};
@@ -101,6 +105,7 @@ void test_welford_basic_stats() {
     EXPECT_NEAR(agg.std_error(), expected_stderr, 1e-12, "std error derived from variance");
 }
 
+// Ensure reset clears all running state
 void test_welford_reset() {
     WelfordAggregator<> agg;
     agg.add(1.0);
@@ -112,6 +117,7 @@ void test_welford_reset() {
     EXPECT_NEAR(agg.variance(), 0.0, 1e-12, "reset clears variance");
 }
 
+// Same seed should produce identical sequences
 void test_rng_reproducibility() {
     constexpr std::uint64_t seed = 42;
     auto rng1 = make_rng(seed);
@@ -127,6 +133,7 @@ void test_rng_reproducibility() {
     EXPECT_TRUE(seq1 == seq2, "same seed produces identical stream");
 }
 
+// Different stream ids should not match
 void test_rng_stream_independence() {
     constexpr std::uint64_t seed = 42;
     auto rng1 = make_rng(seed, 1);
@@ -143,6 +150,7 @@ void test_rng_stream_independence() {
     EXPECT_TRUE(!all_equal, "different stream ids should decorrelate sequences");
 }
 
+// Basic mean/variance sanity check for uniform distribution
 void test_rng_uniform_sanity() {
     std::uint64_t seed = 2024;
     auto rng = make_rng(seed);
@@ -164,6 +172,7 @@ void test_rng_uniform_sanity() {
     EXPECT_NEAR(variance, 1.0 / 12.0, 0.01, "uniform(0,1) variance");
 }
 
+// Constant model should produce zero variance and mean 1.0
 void test_sequential_constant_model() {
     ConstantOneModel model;
     auto engine = make_engine(model, execution::Sequential{}, 1234ULL, StubFactory{}, transform::Identity{});
@@ -174,6 +183,7 @@ void test_sequential_constant_model() {
     EXPECT_EQ(result.iterations, 5'000u, "iterations tracked");
 }
 
+// Deterministic RNG sequence should yield a predictable mean/variance
 void test_sequential_deterministic_sequence() {
     // Sequence should be 10,11,12,13,... starting at seed
     IncrementingFactory factory;
@@ -193,6 +203,7 @@ void test_sequential_deterministic_sequence() {
     EXPECT_EQ(result.iterations, n, "iteration count");
 }
 
+// Running parallel twice with the same seed should be deterministic
 void test_parallel_reproducibility() {
 #ifdef MCLIB_PARALLEL_ENABLED
     Uniform01Model model;
@@ -210,6 +221,7 @@ void test_parallel_reproducibility() {
 #endif
 }
 
+// Changing the seed should change the result even in parallel
 void test_parallel_seed_variation_changes_result() {
 #ifdef MCLIB_PARALLEL_ENABLED
     Uniform01Model model;
